@@ -1,0 +1,566 @@
+---
+title: "Descriptive Analysis of Tracheostomy Resource Utilization Study"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+---
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+echo = FALSE,
+cache = FALSE,
+include = TRUE,
+collapse = TRUE,
+warning = FALSE,
+message = FALSE,
+dependson = NULL,
+engine = "R", # Chunks will always have R code, unless noted
+error = TRUE,
+fig.path="Figures/nas_mwph", # Set the figure optins
+fig.align = "center",
+fig.width = 6,
+fig.height = 6,
+dpi = 300)
+```
+
+```{r}
+my_theme <- function() {
+ theme(axis.text.x=element_text(vjust=1, size=11, color="black"),
+ axis.text.y=element_text(hjust=1,vjust=1, size=12, color="black"),
+ panel.background=element_rect(fill="white",color="black"),
+ plot.title = element_text(size = 15, face = "bold"),
+ panel.grid.minor.y = element_blank(),
+ panel.grid.major.y = element_line(color="#CCCCCC", linetype = 2),
+ panel.grid.minor.x = element_blank(),
+ panel.grid.major.x = element_line(color="#CCCCCC", linetype = 2),
+ axis.title.x=element_text(size=22, face = "bold"),
+ axis.title.y=element_text(size=22, face = "bold"),
+ strip.text=element_text(size=12, face = "bold"),
+ legend.text=element_text(size=20,face="bold"),
+ legend.title=element_text(colour="black", size=22, face="bold"),
+ axis.line.x = element_line(size = 1.5),
+ axis.line.y = element_line(size = 1.5),
+ axis.ticks = element_line(size = 1.5,color="black"),
+ axis.text = element_text(color="black"),
+ axis.ticks.length= unit(0.45, "cm"),
+ legend.key.width = unit(1.2, "cm"))
+ #legend.background = element_rect(fill="white",color="black"))
+}
+```
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(table1) 
+library(ggpubr)
+trach <- read.csv("C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\TracheostomyResource_DATA_LABELS_2023-02-03_1248.csv")
+```
+## Interested variables\
+
+Covariates:\
+demographics(record_id, age, race, insurance)\
+Mortality before one-year follow-up\
+Mortality before three-year follow-up\
+Indication for tracheostomy radio\
+Total hospital stay (days)\
+Duration (in days) of continuous infusion of sedatives\
+Duration (in days) of continuous infusion of vasoactives\
+Pediatric Cerebral Performance Category(Admission, Discharge, year1, year3, year5, mortality)\
+Functional Status Score TOTAL(pre-Admission, admission, discharge, year1, year3, year5, mortality)\
+
+Outcomes:\
+Number of hospital admissions(year1, year3, year5)\
+Number of ED visits(year1, year3, year5)\
+Number of Prescription Medications(Discharge, year1, year3, year5)\
+```{r}
+trach1 <- data.frame(record_id=trach$Record.ID, ageattrach=trach$Age.at.tracheostomy, age_year1=trach$Age.at.One.year.Follow.up..years., 
+age_year3=trach$Age.at.Three.year.Follow.up,
+age_year5=trach$Age.at.Five.year.Follow.up,
+age_death=trach$Age.at.Death..in.months.,
+mortality1=trach$Mortality.before.one.year.follow.up.,
+mortality3=trach$Mortality.prior.to.3.year.follow.up.,
+mortality5=trach$Mortality.before.5.year.follow.up.,
+race=trach$Race, insurance=trach$Type.of.Insurance,
+
+
+indication_fortrach=trach$Indication.for.tracheostomy, hospital_lengthofstay=trach$Total.hospital.stay..days., sedatives=trach$Duration..in.days..of.continuous.infusion.of.sedatives, vasoactives=trach$Duration..in.days..of.continuous.infusion.of.vasoactives,
+
+admit_pcpc=trach$Admission.Pediatric.Cerebral.Performance.Category,
+discharge_pcpc=trach$Discharge.Pediatric.Cerebral.Performance.Category,
+pcpc_year1=trach$Pediatric.Cerebral.Performance.Category.1.year.post.tracheostomy, pcpc_year3=trach$Pediatric.Cerebral.Performance.Category.at.3.years.post.tracheostomy, pcpc_year5=trach$Pediatric.Performance.Category.at.5.years.post.tracheostomy,
+pcpc_mortality=trach$Pediatric.Cerebral.Performance.Category,
+
+admitfss_totalscore=trach$Admission.Functional.Status.Score.TOTAL,
+dischargefss_total=trach$Discharge.Functional.Status.Score.TOTAL,
+fsstotal_year1=trach$Functional.Status.Scale.TOTAL.SCORE,
+fsstotal_year3=trach$Functional.Status.Scale..TOTAL.,
+fsstotal_year5=trach$Functional.Status.Scale..TOTAL.score,
+fsstotal_mortality=trach$Functional.Status.Scale..TOTAL.SCORE..,
+
+admit_year1=trach$Number.of.hospital.admissions, admit_year3=trach$Number.of.hospital.admissions.1, admit_year5=trach$Number.of.hospital.admissions.2, 
+edvisits_year1=trach$Number.of.ED.visits, 
+edvisits_year3=trach$Number.of.ED.visits.1, 
+edvisits_year5=trach$Number.of.ED.visits.2,
+medsatdischarge=trach$Total.number.of.prescription.medications.at.discharge,
+meds_year1=trach$Number.of.Prescription.Medications, meds_year3=trach$Number.of.Prescription.Medications.1, meds_year5=trach$Number.of.Prescription.Medications.2)
+
+for (i in 1:nrow(trach1)) {
+  trach1$admit_pcpc[i] <- substr(trach1$admit_pcpc[i], start = 1, stop = 1)
+  trach1$discharge_pcpc[i] <- substr(trach1$discharge_pcpc[i], start = 1, stop = 1)
+  trach1$pcpc_year1[i] <- substr(trach1$pcpc_year1[i], start = 1, stop = 1)
+  trach1$pcpc_year3[i] <- substr(trach1$pcpc_year3[i], start = 1, stop = 1)
+  trach1$pcpc_year5[i] <- substr(trach1$pcpc_year5[i], start = 1, stop = 1)
+  trach1$pcpc_mortality[i] <- substr(trach1$pcpc_mortality[i], start = 1, stop = 1)
+}
+trach1[, 15:20] <- replace(trach1[, 15:20], trach1[, 15:20] == 1, "Normal")
+trach1[, 15:20] <- replace(trach1[, 15:20], trach1[, 15:20] == 2, "Mild")
+trach1[, 15:20] <- replace(trach1[, 15:20], trach1[, 15:20] == 3, "Moderate")
+trach1[, 15:20] <- replace(trach1[, 15:20], trach1[, 15:20] == 4, "Severe")
+trach1[, 15:20] <- replace(trach1[, 15:20], trach1[, 15:20] == 5, "Coma")
+f <- function(x) factor(x, levels = c("Normal", "Mild", "Moderate", "Severe", "Coma"))
+trach1[,15:20] <- lapply(trach1[,15:20], f) 
+trach1[trach1 == ""] <- NA
+trach1$ageattrach <- as.numeric(difftime(trach$Date.of.Tracheostomy, trach$Date.of.Birth, units = "days")/30)
+
+trach1$age_year1 <- ifelse(trach1$mortality1=="Yes"|trach1$mortality1=="", NA, trach1$ageattrach+12)
+trach1$age_year3 <- ifelse(trach1$mortality3=="Yes"|trach1$mortality3=="", NA, trach1$ageattrach+36)
+trach1$mortality3 <- ifelse(trach1$mortality1=="Yes", "Yes", trach1$mortality3)
+# 
+# sum(trach1$ageattrach<3)
+# sum(3<=trach1$ageattrach& trach1$ageattrach<8)
+# sum(trach1$ageattrach>=8)
+# 
+# table(trach1$mortality1)
+# table(trach1$mortality3)
+# table(trach1$mortality5)
+```
+
+## Plots of categorical variables and outcomes
+
+### Races
+```{r}
+ggplot(trach1, aes(x = race, fill= race)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Race") +
+  ylab("Percentage of Race")
+```
+
+### Indication for tracheostomy radio
+```{r}
+ggplot(trach1, aes(x = indication_fortrach, fill= indication_fortrach)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3)) +
+  xlab("Indication for tracheostomy radio") +
+  ylab("Percentage of Indication for tracheostomy radio")
+```
+
+### Pediatric Cerebral Performance Category
+```{r}
+ggplot(trach1, aes(x = admit_pcpc, fill= admit_pcpc)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Admission Pediatric Cerebral Performance Category") +
+  ylab("Percentage of Admission Pediatric Cerebral Performance Category")
+
+ggplot(trach1, aes(x = discharge_pcpc, fill= discharge_pcpc)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Discharge Pediatric Cerebral Performance Category") +
+  ylab("Percentage of Discharge Pediatric Cerebral Performance Category")
+
+ggplot(trach1, aes(x = pcpc_year1, fill= pcpc_year1)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Pediatric Cerebral Performance Category 1-year posttracheostomy") +
+  ylab("Percentage of Pediatric Cerebral Performance Category 1-year post-tracheostomy")
+
+ggplot(trach1, aes(x = pcpc_year3, fill= pcpc_year3)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Pediatric Cerebral Performance Category at 3 years post-tracheostomy") +
+  ylab("Percentage of Pediatric Cerebral Performance Category at 3 years post-tracheostomy")
+
+ggplot(trach1, aes(x = pcpc_year5, fill= pcpc_year5)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Pediatric Performance Category at 5 years post tracheostomy") +
+  ylab("Percentage of Pediatric Performance Category at 5 years post-tracheostomy")
+
+ggplot(trach1, aes(x = pcpc_mortality, fill= pcpc_mortality)) +
+  geom_bar(aes(y = after_stat(count / sum(count)*100))) +
+  xlab("Pediatric Cerebral Performance Category-mortality") +
+  ylab("Percentage of Pediatric Cerebral Performance Category-mortality")
+```
+
+### Outcomes
+```{r}
+filtered <- trach1 %>%
+  select(starts_with("admit"), starts_with("meds"), starts_with("edvisits")) %>% 
+  select(-1, -2)
+filtered <- filtered[, !sapply(filtered, is.factor)]
+filtered <- filtered[, !sapply(filtered, is.character)]
+means <- as.vector(colMeans(filtered, na.rm = TRUE))
+# var <- substr(colnames(filtered), 1, nchar(colnames(filtered))-6)
+var <- rep(c("hospital_admissions","Prescription_Medications","ED_visits"), each=4)
+means <- c(NA, 3.0400000, 1.7948718, 1.1250000, 10.6981132, 8.3000000, 6.8421053, 6.0000000, NA, 1.4800000, 0.8717949, 0.5625000)
+aim2 <- data.frame(Category=var, Mean=means, Year=rep(c("discharge", "year1","year3","year5"), 3))
+# as.vector(apply(filtered, 2, function(x) sum(is.na(x))))
+aim2$Missing <- c(53, 3, 14, 37,  0,  3, 15, 37, 53, 3, 14, 37)
+ggplot(aim2, aes(fill=Category, y=Mean, x=Year)) + 
+  geom_bar(position="dodge", stat="identity") +
+  xlab("Follow up years") +
+  ylab("Mean")
+```
+
+## Bar plots of Resource Utilization Outcomes
+```{r}
+prop_ed1 <- round(c(0.56603774, 0.16981132, 0.20754717, 0.05660377)*100,1)
+prop_ed2 <- round(c(0.6037736, 0.1320755, NA, 0.2641509)*100,1)
+prop_ed3 <- round(c(0.15094340, 0.13207547, 0.01886792, 0.69811321)*100,1)
+
+# Combine the proportions into a data frame
+cutoff = c("[0,1]", "2", "[3,5]", "NA", "[0,1]", "[2,6]",NA, "NA", "0", "1", "2", "NA")
+
+prop_df <- data.frame(
+  group=rep(c("1","2","3","4"),3),
+  column = rep(c("year1", "year3", "year5"), each = 4),
+  prop = c(prop_ed1, prop_ed2, prop_ed3)
+)
+
+# Create a ggplot of proportions
+ggplot(prop_df, aes(x = column, y = prop, fill = group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste0(prop,"%")), position = position_dodge(width = 0.9), vjust = -0.5)+
+  geom_text(aes(label = cutoff,y = 0), position = position_dodge(width = 0.9))+
+  labs(x = "Time", y = "Proportions", title = "Bar plots of ED visits") +
+  my_theme()+
+  theme(plot.title=element_text(size = 20, face = "bold"))+
+  theme(legend.position = "none")
+```
+
+```{r}
+prop_med1 <- round(c(0.58490566, 0.16981132, 0.18867925, 0.05660377)*100,1)
+prop_med2 <- round(c(0.3962264, 0.1509434, 0.1698113, 0.2830189)*100,1)
+prop_med3 <- round(c(0.16981132, 0.05660377, 0.07547170, 0.69811321)*100,1)
+
+# Combine the proportions into a data frame
+cutoff = c("[0,8]", "[9,11]", "[12,18]", "NA", "[1,5]", "[6,9]", "[10,16]", "NA", "[1,5]", "6", "[7,19]", "NA")
+
+prop_df <- data.frame(
+  group=rep(c("1","2","3","4"),3),
+  column = rep(c("year1", "year3", "year5"), each = 4),
+  prop = c(prop_med1, prop_med2, prop_med3)
+)
+
+# Create a ggplot of proportions
+ggplot(prop_df, aes(x = column, y = prop, fill = group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste0(prop,"%")), position = position_dodge(width = 0.9), vjust = -0.5)+
+  geom_text(aes(label = cutoff,y = 0), position = position_dodge(width = 0.9))+
+  labs(x = "Time", y = "Proportions", title = "Bar plots of medications") +
+  my_theme()+
+  theme(plot.title=element_text(size = 20, face = "bold"))+
+  theme(legend.position = "none")
+```
+
+```{r}
+prop_ad1 <- round(c(0.47169811, 0.24528302, 0.22641509, 0.05660377)*100,1)
+prop_ad2 <- round(c(0.3962264, 0.1509434, 0.1886792, 0.2641509)*100,1)
+prop_ad3 <- round(c(0.18867925, 0.09433962, 0.01886792, 0.69811321)*100,1)
+
+# Combine the proportions into a data frame
+cutoff = c("[0,2]", "[3,4]", "[5,9]", "NA", "[0,1]", "2", "[3,8]", "NA", "[0,1]", "2", "3", "NA")
+
+prop_df <- data.frame(
+  group=rep(c("1","2","3","4"),3),
+  column = rep(c("year1", "year3", "year5"), each = 4),
+  prop = c(prop_ad1, prop_ad2, prop_ad3)
+)
+
+# Create a ggplot of proportions
+ggplot(prop_df, aes(x = column, y = prop, fill = group)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  geom_text(aes(label = paste0(prop,"%")), position = position_dodge(width = 0.9), vjust = -0.5)+
+  geom_text(aes(label = cutoff,y = 0), position = position_dodge(width = 0.9))+
+  labs(x = "Time", y = "Proportions", title = "Bar plots of admission") +
+  my_theme()+
+  theme(plot.title=element_text(size = 20, face = "bold"))+
+  theme(legend.position = "none")
+```
+
+```{r}
+## Comparing Outcomes by year
+# knitr::kable(aim2[, c(1,3,2,4)])
+```
+
+```{r}
+## Comparing Functional Status Score TOTAL by year
+fun <- trach1[,21:26]
+
+fss <- data.frame(Year=c("admission", "discharge", "year1", "year3", "year5", "mortality"), Mean=as.vector(colMeans(fun, na.rm = TRUE)))
+fss$Missing <- apply(fun, 2, function(x) sum(is.na(x)))
+# knitr::kable(fss)
+```
+
+## Longitudinal trajectories for FSS_total for each individual, mean (mark in red) and confidence interval
+```{r}
+# Reshape the data frame to long format
+names(fun) <- c("admission", "discharge", "year1", "year3", "year5", "mortality")
+fun1 <- cbind(x = 1:nrow(fun), fun) %>% select(-mortality)
+fun_long <- tidyr::pivot_longer(fun1, -1, names_to = "group", values_to = "value")
+
+# Extract colors from the palette
+palette <- colorRampPalette(colors = c("white", "black"))
+colors <- palette(265)
+
+# Create a plot with individual curves and a mean curve
+ggplot(fun_long, aes(x = factor(group, levels = c("admission", "discharge", "year1", "year3", "year5", "mortality")), y = value, group = x)) +
+  my_theme() +
+  theme(plot.title=element_text(size = 20, face = "bold"))+
+  geom_line(aes(col = colors)) +
+  # scale_color_manual(values=colors)+
+  geom_point(size=1) +
+  stat_summary(aes(group = 1), fun.y = "mean", geom = "line", size = 1, color = "red") +
+  stat_summary(aes(color = "mean", group = "mean"), geom = "ribbon", fun = "mean", size= 1.2, alpha=0.1,
+               fun.min = function(x) mean(x) - 1.96 / length(x) * sd(x), 
+               fun.max = function(x) mean(x) + 1.96 / length(x) * sd(x), show.legend = FALSE) +
+  labs(x = "Time", y = "FSS_total", title = "Longitudinal trajectories for FSS_total") +
+  theme(legend.position = "none")
+
+# mean((fun_long %>% filter(group=="admission"))$value)
+# mean((fun_long %>% filter(group=="discharge"))$value)
+# mean((fun_long %>% filter(group=="year1"))$value, na.rm=TRUE)
+# mean((fun_long %>% filter(group=="year3"))$value, na.rm=TRUE)
+# mean((fun_long %>% filter(group=="year5"))$value, na.rm=TRUE)
+
+fss <- c(18.98113, 13.92453, 12.78, 10.925)
+time <- c("adm", "dis", "year1", "year3")
+time <- c(0,2,8,12)
+cor.test(fss, time, method = "spearman")
+```
+
+## Facet plots of FSS-total 
+
+### ED visits at 1 and 3 -year follow-up
+```{r}
+facet <- trach1[,c("fsstotal_year1", "fsstotal_year3", "admit_year1", "admit_year3", "edvisits_year1", "edvisits_year3", "meds_year1", "meds_year3", "ageattrach")] 
+
+facet_ED1 <-  facet[,c(1,5,9)] %>%
+  mutate(ED = ifelse(edvisits_year1==0, "ED visits = 0", ifelse(edvisits_year1==1, "ED visits = 1", "ED-visit > 1"))) %>% 
+  mutate(year = "1-year follow-up") %>% 
+  select(-edvisits_year1)
+
+facet_ED1 <- facet_ED1[complete.cases(facet_ED1$ED), ]
+names(facet_ED1)[names(facet_ED1) == "fsstotal_year1"] <- "fsstotal_year"
+
+
+facet_ED2 <-  facet[,c(2,6,9)] %>%
+  mutate(ED = ifelse(edvisits_year3==0, "ED visits = 0", ifelse(edvisits_year3==1, "ED visits = 1", "ED-visit > 1"))) %>% 
+  mutate(year = "3-year follow-up") %>% 
+  select(-edvisits_year3)
+facet_ED2 <- facet_ED2[complete.cases(facet_ED2$ED), ]
+names(facet_ED2)[names(facet_ED2) == "fsstotal_year3"] <- "fsstotal_year"
+
+facet_ED <- rbind(facet_ED1, facet_ED2)
+
+facet_ED <- facet_ED %>% mutate(age = ifelse(facet_ED$ageattrach<3, "age<3", ifelse(facet_ED$ageattrach>=3&facet_ED$ageattrach<8, "3<=age<8", "age>=8")))
+
+facet_ED$ED <- factor(facet_ED$ED, levels = c("ED visits = 0", "ED visits = 1", "ED-visit > 1"))
+facet_ED$age <- factor(facet_ED$age, levels = c("age<3", "3<=age<8", "age>=8"))
+
+
+group.colors <- c("ED visits = 0" = "#2B83BA",  "ED visits = 1" ="#ABDDA4", "ED-visit > 1"= "#D7191C")
+ed1 <- ggplot(facet_ED, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(plot.title=element_text(size = 20, face = "bold"))+
+  theme(legend.position="none") +
+  geom_boxplot(aes(fill=ED))+
+  labs(x = "Time", y = "FSS total") +
+  facet_grid(. ~ ED) +
+  scale_fill_manual(values=group.colors) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+```
+
+### ED visits by 3 age groups: age at tracheostomy<3; 3<=age<8; age>=8
+```{r}
+ggplot(facet_ED, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(legend.position="none") +
+  geom_boxplot(aes(fill=ED))+
+  labs(x = "Time", y = "FSS_total", title = "Facet plots of FSS-total in ED visits by 3 age groups") +
+  facet_grid(age ~ ED)+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+  # +geom_text(data = facet_ED%>% filter(!is.na(ED)) %>% count(ED,age), 
+  #           aes(label = paste("Count:",n), y = Inf, x  = -Inf), vjust = 1, hjust = 0)
+```
+
+### Medications at 1 and 3 -year follow-up
+```{r}
+facet_meds1 <-  facet[,c(1,7,9)] %>%
+  mutate(meds = ifelse(meds_year1<=5, "medications <= 5", ifelse(facet$meds_year1>5 & facet$meds_year1<=8, "5< medications <=8", "medications > 8"))) %>% 
+  mutate(year = "1-year follow-up") %>% 
+  select(-meds_year1)
+
+facet_meds1 <- facet_meds1[complete.cases(facet_meds1$meds), ]
+names(facet_meds1)[names(facet_meds1) == "fsstotal_year1"] <- "fsstotal_year"
+
+
+facet_meds2 <-  facet[,c(2,8,9)] %>%
+  mutate(meds = ifelse(meds_year3<=5, "medications <= 5", ifelse(facet$meds_year3>5 & facet$meds_year3<=8, "5< medications <=8", "medications > 8"))) %>% 
+  mutate(year = "3-year follow-up") %>% 
+  select(-meds_year3)
+facet_meds2 <- facet_meds2[complete.cases(facet_meds2$meds), ]
+names(facet_meds2)[names(facet_meds2) == "fsstotal_year3"] <- "fsstotal_year"
+
+facet_meds <- rbind(facet_meds1, facet_meds2)
+facet_meds <- facet_meds %>% mutate(age = ifelse(facet_meds$ageattrach<3, "age<3", ifelse(facet_meds$ageattrach>=3&facet_meds$ageattrach<8, "3<=age<8", "age>=8")))
+
+facet_meds$meds <- factor(facet_meds$meds, levels = c("medications <= 5", "5< medications <=8", "medications > 8"))
+facet_meds$age <- factor(facet_meds$age, levels = c("age<3", "3<=age<8", "age>=8"))
+
+group.colors <- c("medications <= 5" = "#2B83BA",  "5< medications <=8" ="#ABDDA4", "medications > 8"="#D7191C")
+med1 <- ggplot(facet_meds, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(plot.title=element_text(size = 18, face = "bold"))+
+  theme(legend.position="none") + 
+  geom_boxplot(aes(fill=meds))+
+  labs(x = "Time", y = "FSS total")+
+  facet_grid(. ~ meds)+
+  scale_fill_manual(values=group.colors) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+```
+
+### Medications by 3 age groups
+```{r}
+ggplot(facet_meds, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(plot.title=element_text(size = 13, face = "bold"))+
+  theme(legend.position="none") +
+  geom_boxplot(aes(fill=meds))+
+  labs(x = "Time", y = "FSS_total", title = "Facet plots of FSS-total in medications by 3 age groups") +
+  facet_grid(age ~ meds)+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+```
+
+### Hospital admissions at 1 and 3 -year follow-up
+```{r}
+facet_admit1 <-  facet[,c(1,3,9)] %>%
+  mutate(admit = ifelse(admit_year1==0, "admissions = 0", ifelse(admit_year1==1, "admissions = 1", "admissions > 1"))) %>% 
+  mutate(year = "1-year follow-up") %>% 
+  select(-admit_year1)
+
+facet_admit1 <- facet_admit1[complete.cases(facet_admit1$admit), ]
+names(facet_admit1)[names(facet_admit1) == "fsstotal_year1"] <- "fsstotal_year"
+
+
+facet_admit2 <-  facet[,c(2,4,9)] %>%
+  mutate(admit = ifelse(admit_year3==0, "admissions = 0", ifelse(admit_year3==1, "admissions = 1", "admissions > 1"))) %>% 
+  mutate(year = "3-year follow-up") %>% 
+  select(-admit_year3)
+facet_admit2 <- facet_admit2[complete.cases(facet_admit2$admit), ]
+names(facet_admit2)[names(facet_admit2) == "fsstotal_year3"] <- "fsstotal_year"
+
+facet_admit <- rbind(facet_admit1, facet_admit2)
+facet_admit <- facet_admit %>% mutate(age = ifelse(facet_admit$ageattrach<3, "age<3", ifelse(facet_admit$ageattrach>=3&facet_admit$ageattrach<8, "3<=age<8", "age>=8")))
+
+facet_admit$age <- factor(facet_admit$age, levels = c("age<3", "3<=age<8", "age>=8"))
+
+group.colors <- c("admissions = 0" = "#2B83BA",  "admissions = 1" ="#ABDDA4", "admissions > 1"="#D7191C")
+admit1 <- ggplot(facet_admit, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(plot.title=element_text(size = 16, face = "bold"))+
+  theme(legend.position="none") + 
+  geom_boxplot(aes(fill=admit))+
+  labs(x = "Time", y = "FSS total")+
+  facet_grid(. ~ admit)+
+  scale_fill_manual(values=group.colors) +
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+```
+
+### Hospital admissions by 3 age groups
+```{r}
+ggplot(facet_admit, aes(x=factor(year, levels = c("1-year follow-up", "3-year follow-up")), y=fsstotal_year))+ 
+  my_theme() +
+  theme(plot.title=element_text(size = 11, face = "bold"))+
+  theme(legend.position="none") +
+  geom_boxplot(aes(fill=admit))+
+  labs(x = "Time", y = "FSS_total", title = "Facet plots of FSS-total in hospital admissions by 3 age groups") +
+  facet_grid(age ~ admit)+
+  scale_x_discrete(guide = guide_axis(n.dodge=3))
+# +
+#  geom_text(data = facet_admit%>% filter(!is.na(admit)) %>% count(admit,age), 
+#              aes(label = paste("Count:",n), y = Inf, x  = -Inf), vjust = 1, hjust = 0)
+```
+
+```{r}
+ggarrange(admit1, ed1, med1,
+                    labels = c("admissions", "ED visits", "medications"),
+                    ncol = 2, nrow = 2)
+
+ggarrange(admit1, ggarrange(ed1), nrow = 2) 
+
+options(repr.plot.width = 5, repr.plot.height =20)
+
+png(filename="bench_query_sort.png", width=500, height=600)
+ggarrange(admit1, ed1, med1, nrow = 3)
+
+library(patchwork)
+library(gridExtra)
+
+# Combine the plots with gridExtra
+grid.arrange(admit1, ed1, med1)
+```
+
+## Summary of age, mortality, race, insurance, indication_fortrach, hospital_lengthofstay, sedatives, and vasoactives
+```{r}
+my.render.cont <- function(x) {
+    with(stats.apply.rounding(stats.default(x), digits=2), c("",
+        "Mean (SD)"=sprintf("%s (&plusmn; %s)", MEAN, SD)))
+}
+
+# table1(~ ., data=trach1[,-1], render.continuous=my.render.cont)
+table1(~ ., data=trach1[,c(2, 7, 3, 8, 4, 9:14)])
+```
+
+## Summary of pcpc and fss_total
+```{r}
+pcpc <- trach1[,c(15,17:19)]
+pcpc_long <- gather(pcpc, key = "year", value = "pcpc")
+pcpc_long$year=rep(c("admit", "year1", "year3", "year5"), each=53)
+
+fss_total <- trach1[,c(21, 23:25)]
+fss_total_long <- gather(fss_total, key = "year", value = "fss_total")
+data <- data.frame(year=pcpc_long$year,pcpc=pcpc_long$pcpc, fss_total=fss_total_long$fss_total)
+data$pcpc <- factor(data$pcpc, levels = c("Normal", "Mild", "Moderate", "Severe", "Coma"))
+table1(~ pcpc+fss_total | year, data = data, by = "year", overall=FALSE)
+```
+
+## Summary of admit, edvisits and meds
+```{r}
+admit <- trach1 %>% select(starts_with("admit_year"))
+admit_long <- gather(admit, key = "year", value = "admit")
+admit_long$year <- substr(admit_long$year, nchar(admit_long$year) - 4, nchar(admit_long$year))
+
+edvisits <- trach1 %>% select(starts_with("edvisits"))
+edvisits_long <- gather(edvisits, key = "year", value = "edvisits")
+
+meds <- trach1 %>% select(starts_with("meds_year"))
+meds_long <- gather(meds, key = "year", value = "meds")
+
+data <- data.frame(year=admit_long$year,admit=admit_long$admit, edvisits=edvisits_long$edvisits, meds=meds_long$meds)
+table1(~ admit+edvisits+meds | year, data = data, by = "year", overall=FALSE)
+```
+```{r}
+# # quantile(trach1$admit_year1, na.rm = TRUE)
+# # 0%  25%  50%  75% 100%
+proptab <- function(x){
+  prop.table(table(cut(x,quantile(x, na.rm = TRUE)[c(1,3,4,5)], include.lowest = TRUE, right = TRUE), exclude=NULL))
+}
+proptab(trach1$admit_year1)
+proptab(trach1$admit_year3)
+proptab(trach1$admit_year5)
+proptab(trach1$edvisits_year1)
+# proptab(trach1$edvisits_year3)
+proptab(trach1$edvisits_year5)
+proptab(trach1$meds_year1)
+proptab(trach1$meds_year3)
+proptab(trach1$meds_year5)
+
+
+prop.table(table(cut(trach1$edvisits_year3,quantile(trach1$edvisits_year3, na.rm = TRUE)[c(1,4,5)], include.lowest = TRUE, right = TRUE), exclude=NULL))
+```

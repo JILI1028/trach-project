@@ -1,0 +1,124 @@
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(table1) 
+trach <- read.csv("C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\TracheostomyResource_DATA_LABELS_2023-02-03_1248.csv")
+```
+
+```{r}
+# 1-year
+resp <- data.frame(mental=trach$Functional.Status.Score..MENTAL,
+sensory=trach$Functional.Status.Score..SENSORY,
+communication=trach$Functional.Satus.Score..COMMUNICATION,
+motor=trach$Functional.Status.Scale..MOTOR.,
+feeding=trach$Functional.Status.Scale..FEEDING,
+resp=trach$Functional.Status.Scale..RESPIRATORY,
+fsstotal_year1=trach$Functional.Status.Scale.TOTAL.SCORE)
+# discharge
+resp <- data.frame(
+  mental=trach$DISCHARGE.Functional.Status.Scale..MENTAL.STATUS,
+  sensory=trach$DISCHARGE.Functional.Status.Score..SENSORY.FUNCTION,
+  communication=trach$DISCHARGE.Functional.Status.Scale..COMMUNICATION,
+  motor=trach$DISCHARGE.Functional.Status.Scale..MOTOR.FUNCTIONING,
+  feeding=trach$DISCHARGE.Functional.Status.Scale..FEEDING,
+  resp=trach$DISCHARGE.Functional.Status.Scale..RESPIRATORY.STATUS,
+  respsupports_Decan=trach$Resp.Support.at.three.years..choice.Decannulated.,
+  dischargefss_total=trach$Discharge.Functional.Status.Score.TOTAL
+)
+num <- function(x) {
+  ifelse(grepl("^Normal", x), 1, 
+         ifelse(grepl("^Mild", x), 2, 
+                ifelse(grepl("^Moderate", x), 3, 
+                       ifelse(grepl("^Severe", x), 4, 
+                              ifelse(grepl("^Very", x), 5, NA)))))
+}
+
+resp1 <- data.frame(cbind(apply(resp[,-c(7,8)], 2, function(x) num(x))), respsupports_Decan=resp[,7], fsstotal1=resp[,8])
+resp1[,c(1:6)] <- lapply(resp1[,c(1:6)], as.factor)
+resp1[,c(7)] <- as.factor(ifelse(resp1[,c(7)]=="Checked",1,0))
+
+resp2 <- na.omit(resp1)
+```
+# cut off point doesn't work
+```{r}
+ggplot(resp2, aes(x = c(1:nrow(resp2)), y = fsstotal1, fill = respsupports_Decan)) +
+  geom_bar(stat = "identity", position = "dodge")
+resp2_decan1 <- resp2 %>% filter(respsupports_Decan==1)
+resp2_decan0 <- resp2 %>% filter(respsupports_Decan==0)
+max(resp2_decan1$fsstotal1) #13
+
+# use max. of fss total when decan=1 as cut off point
+sum(resp2_decan0$fsstotal1>13) #15
+sum(resp2_decan0$fsstotal1<=13) #24
+```
+
+```{r}
+apply(resp2, 2, table)
+```
+
+```{r}
+resp2 <- as.data.frame(apply(resp2, 2, as.integer))
+convert <- function(x) ifelse(x==1,1,"other")
+resp3 <- cbind(as.data.frame(lapply(resp2[,1:4], convert)),
+               feeding = ifelse(resp2$feeding<3,1,"other"),
+               resp = ifelse(resp2$resp<=3,1,"other"),
+                 respsupports_Decan=resp2$respsupports_Decan)
+```
+
+```{r warning=FALSE}
+my_factor <- function(x) factor(x, levels = c("other","1"))
+resp3[,1:6] <- lapply(resp3[1:6], my_factor)
+
+model1 <- glm(respsupports_Decan ~ mental + sensory + communication + motor + feeding + resp, family = "binomial", data=resp3)
+summary(model1)
+confint.default(model1)
+
+model2 <- glm(respsupports_Decan ~ sensory + communication, family = "binomial", data=resp3)
+summary(model2)
+confint.default(model2)
+```
+
+```{r}
+resp3$respsupports_noDecan <- ifelse(resp3$respsupports_Decan==0,1,0)
+resp3$motor <- relevel(resp3$motor, ref = "1")
+m5 <- (glm(respsupports_noDecan ~ motor, family = "binomial", data=resp3))
+summary(m5)
+confint.default(m5)
+
+m1 <- (glm(respsupports_Decan ~ mental, family = "binomial", data=resp3))
+summary(m1)
+m2 <- (glm(respsupports_Decan ~ sensory, family = "binomial", data=resp3))
+summary(m2)
+m3 <- (glm(respsupports_Decan ~ communication, family = "binomial", data=resp3))
+summary(m3)
+m4 <- (glm(respsupports_Decan ~ resp, family = "binomial", data=resp3))
+summary(m4)
+m5 <- (glm(respsupports_Decan ~ motor, family = "binomial", data=resp3))
+summary(m5)
+m6 <- (glm(respsupports_Decan ~ feeding, family = "binomial", data=resp3))
+summary(m6)
+```
+
+```{r}
+confint.default(m1)
+confint.default(m2)
+confint.default(m3)
+confint.default(m4)
+confint.default(m5)
+confint.default(m6)
+```
+
+```{r}
+model1 <- glm(respsupports_Decan ~ mental + sensory + communication + motor + feeding + resp, family = "binomial", data=resp3)
+summary(model1)
+```
+
+stepwise
+```{r}
+step(model1,direction = c("both"))
+```
+
+```{r}
+data.frame(resp3$resp, resp3$respsupports_Decan)
+```
+

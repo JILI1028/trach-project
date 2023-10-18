@@ -1,0 +1,244 @@
+```{r}
+library(table1) 
+library(tidyverse)
+trach <- read.csv("C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\TracheostomyResource_DATA_LABELS_2023-02-03_1248.csv")
+```
+
+```{r}
+check <- function(x){
+   x[x == "Checked"] <- 1
+   x[x == "Unchecked"] <- 0
+   x <- x %>% mutate_if(is.character, as.numeric)
+   return(x)
+}
+
+yes <- function(x){
+   x[x == "Yes"] <- 1
+   x[x == "No"] <- 0
+   return(x)
+}
+```
+
+Undergoing Tracheostomy
+```{r}
+under_con <- data.frame(ageattrach=trach$Age.at.tracheostomy, 
+                     pim_score=trach$PIM.2.Score,
+                     pim_riskofmortality=trach$Risk.of.Mortality..in...,
+                     # admit_diagnosis=trach$Admit.Diagonsis,
+                     admit_pcpc=trach$Admission.Pediatric.Cerebral.Performance.Category,
+                     discharge_pcpc=trach$Discharge.Pediatric.Cerebral.Performance.Category,
+                     preadmitfss_total=trach$Pre.Admission.Functional.Status.Score.TOTAL,
+                     admitfss_totalscore=trach$Admission.Functional.Status.Score.TOTAL,
+                     dischargefss_total=trach$Discharge.Functional.Status.Score.TOTAL,
+                     indication_fortrach=trach$Indication.for.tracheostomy,
+                     airway_cause=trach$Airway,
+                     cardiopulmo_why=trach$Cardiopulmonary.disorder,
+                     neuromus_why=trach$Neuromuscular.disorder,
+                     braininjury_why=trach$Brain.injury,
+                     hospital_lengthofstay=trach$Total.hospital.stay..days.,
+                     daystodischarge=trach$Days.to.discharge.after.tracheostomy,
+                     dischargelocation=trach$Disposition.at.discharge,
+                     medsatdischarge=trach$Total.number.of.prescription.medications.at.discharge)
+
+under_con$admit_pcpc <- as.numeric(substr(under_con$admit_pcpc, start = 1, stop = 1))
+under_con$discharge_pcpc <- as.numeric(substr(under_con$discharge_pcpc, start = 1, stop = 1))
+
+under_con$indication_fortrach <- 
+as.numeric(c("Airway obstruction" = 1, "Craniofacial anomaly" = 2, "Neuromuscular disorder"=3, "Cardiopulmonary disorder"=4, "Brain injury"=5)[under_con$indication_fortrach])
+
+under_con$airway_cause <- 
+as.numeric(c("Subglottic stenosis" = 1, "Bilateral vocal cord palsy" = 2, "Tracheal stenosis"=3, "Laryngomalacia"=4, "Neoplasm"=5, "Diaphragm dysmotility"=6, "Inability to intubate"=7, "Obstructive sleep apnea"=8)[under_con$airway_cause])
+
+under_con$cardiopulmo_why <- 
+as.numeric(c("Prolonged oro-tracheal intubation" = 1, "Pulmonary hypoplasia" = 2, "Bronchopulmonary dysplasia or chronic lungdisease of prematurity"=3, "Adverse cardiopulmonary interactions"=4)[under_con$cardiopulmo_why])
+
+
+under_con$neuromus_why <- 
+as.numeric(c("SMA" = 1, "Neuro-denerative disease or genetic defect withneurodegeneration" = 2, "Hypotonia"=3, "Traumatic brain injury"=4, "Central sleep apnea"=5)[under_con$neuromus_why])
+
+under_con$braininjury_why <- 
+as.numeric(c("Anoxic brain injury" = 1, "CNS hemorrhage" = 2, "Diff use axonal injury"=3)[under_con$braininjury_why])
+
+under_con$dischargelocation <- 
+as.numeric(c("Home" = 1, "Short-term care facility" = 2, "Long-term care facility (group home)"=3, "Other"=4)[under_con$dischargelocation])
+
+
+medicalsubspecial <- trach %>% 
+  select(starts_with("Pediatric.Subspecialists.Appointments.at.discharge..choice."))
+under_con$medicalsubspecial <- rowSums(check(medicalsubspecial))
+# medicalsubspecial[medicalsubspecial == "Checked"] <- 1
+# medicalsubspecial[medicalsubspecial == "Unchecked"] <- 0
+# medicalsubspecial <- medicalsubspecial %>% mutate_if(is.character, as.numeric)
+# under_con$medicalsubspecial <- rowSums(medicalsubspecial)
+
+surgicalsubspec <- trach %>% 
+  select(starts_with("Pediatric.Surgical.Specialists.Appointments.at.discharge..choice."))
+# surgicalsubspec[surgicalsubspec == "Checked"] <- 1
+# surgicalsubspec[surgicalsubspec == "Unchecked"] <- 0
+# surgicalsubspec <- surgicalsubspec %>% mutate_if(is.character, as.numeric)
+under_con$surgicalsubspec <- rowSums(check(surgicalsubspec))
+
+medtypeatdc <- trach %>% 
+   select(starts_with("Medication.Types..choice."))
+# medtypeatdc[medtypeatdc == "Checked"] <- 1
+# medtypeatdc[medtypeatdc == "Unchecked"] <- 0
+# medtypeatdc <- medtypeatdc %>% mutate_if(is.character, as.numeric)
+under_con$medtypeatdc <- rowSums(check(medtypeatdc))
+
+equipmentatdc <- trach %>% 
+   select(starts_with("New.durable.medical.equipment..choice."))
+# equipmentatdc[equipmentatdc == "Checked"] <- 1
+# equipmentatdc[equipmentatdc == "Unchecked"] <- 0
+# equipmentatdc <- equipmentatdc %>% mutate_if(is.character, as.numeric)
+under_con$equipmentatdc <- rowSums(check(equipmentatdc))
+
+newdxatdischarge <- trach %>% 
+   select(starts_with("New.Associated.Diagnoses.at.discharge..choice."))
+# newdxatdischarge[newdxatdischarge == "Checked"] <- 1
+# newdxatdischarge[newdxatdischarge == "Unchecked"] <- 0
+# newdxatdischarge <- newdxatdischarge %>% mutate_if(is.character, as.numeric)
+under_con$newdxatdischarge <- rowSums(check(newdxatdischarge))
+
+respsupport <- trach%>% 
+   select(starts_with("Respiratory.Support.at.discharge..choice."))
+# respsupport[respsupport == "Checked"] <- 1
+# respsupport[respsupport == "Unchecked"] <- 0
+# respsupport <- respsupport %>% mutate_if(is.character, as.numeric)
+under_con$respsupport <- rowSums(check(respsupport))
+
+# write.csv(under_con, "C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\undergoing_trach.csv")
+```
+
+```{r}
+sapply(under_con, function(x) median(x, na.rm = TRUE))
+sapply(under_con, function(x) IQR(x, na.rm = TRUE))
+```
+
+1,3,5-year 
+```{r}
+trach135 <- data.frame(
+edvisits_year1=trach$Number.of.ED.visits, 
+edvisits_year3=trach$Number.of.ED.visits.1, 
+edvisits_year5=trach$Number.of.ED.visits.2,
+
+admit_year1=trach$Number.of.hospital.admissions, 
+admit_year3=trach$Number.of.hospital.admissions.1, admit_year5=trach$Number.of.hospital.admissions.2, 
+
+meds_year1=trach$Number.of.Prescription.Medications, meds_year3=trach$Number.of.Prescription.Medications.1, meds_year5=trach$Number.of.Prescription.Medications.2,
+
+fsstotal_year1=trach$Functional.Status.Scale.TOTAL.SCORE,
+fsstotal_year3=trach$Functional.Status.Scale..TOTAL.,
+fsstotal_year5=trach$Functional.Status.Scale..TOTAL.score,
+
+pcpc_year1=trach$Pediatric.Cerebral.Performance.Category.1.year.post.tracheostomy, pcpc_year3=trach$Pediatric.Cerebral.Performance.Category.at.3.years.post.tracheostomy, pcpc_year5=trach$Pediatric.Performance.Category.at.5.years.post.tracheostomy
+)
+
+ageattrach <- as.numeric(difftime(trach$Date.of.Tracheostomy, trach$Date.of.Birth, units = "days")/30)
+trach135$age_year1 <- ifelse(trach$Mortality.before.one.year.follow.up.=="Yes"|trach$Mortality.before.one.year.follow.up.=="", NA, ageattrach+12)
+trach135$age_year3 <- ifelse(trach$Mortality.prior.to.3.year.follow.up.=="Yes"|trach$Mortality.prior.to.3.year.follow.up.=="", NA, ageattrach+36)
+trach135$age_year5 <- ifelse(trach$Mortality.before.5.year.follow.up.=="Yes"|trach$Mortality.before.5.year.follow.up.=="", NA, ageattrach+60)
+
+trach135$pcpc_year1 <- as.numeric(substr(trach135$pcpc_year1, start = 1, stop = 1))
+trach135$pcpc_year3 <- as.numeric(substr(trach135$pcpc_year3, start = 1, stop = 1))
+trach135$pcpc_year5 <- as.numeric(substr(trach135$pcpc_year5, start = 1, stop = 1))
+
+respsupports_year1 <- trach %>% 
+   select(starts_with("Resp.Support.at.one.year..choice."))
+respsupports_year3 <- trach %>% 
+   select(starts_with("Resp.Support.at.three.years..choice."))
+respsupports_year5 <- trach %>% 
+   select(starts_with("Resp.Support.at.five.years..choice."))
+
+trach135$respsupports_year1 <- rowSums(check(respsupports_year1))
+trach135$respsupports_year3 <- rowSums(check(respsupports_year3))
+trach135$respsupports_year5 <- rowSums(check(respsupports_year5))
+
+newdme_1year <- trach %>% 
+   select(starts_with("New.durable.medical.equipment..choice."))
+newdme_3year <- trach %>% 
+   select(starts_with("New.durable.medical.equipment.at.3.years..choice."))
+newdme_5year <- trach %>% 
+   select(starts_with("New.durable.medical.equipment.at.5.years..choice."))
+
+trach135$newdme_1year <- rowSums(check(newdme_1year))
+trach135$newdme_3year <- rowSums(check(newdme_1year))
+trach135$newdme_5year <- rowSums(check(newdme_1year))
+
+newdx_year1 <- trach %>% 
+   select(starts_with("New.Associated.Diagnoses.at.year.1..choice."))
+newdx_year3 <- trach %>% 
+   select(starts_with("New.Associated.Diagnoses.at.year.3..choice."))
+newdx_year5 <- trach %>% 
+   select(starts_with("New.Associated.Diagnoses.at.year.5..choice."))
+trach135$newdx_year1 <- rowSums(check(newdx_year1))
+trach135$newdx_year3 <- rowSums(check(newdx_year3))
+trach135$newdx_year5 <- rowSums(check(newdx_year5))
+
+pedssubs_year1 <- trach%>% 
+   select(starts_with("Pediatric.Subspecialists.at.One.Year.Follow.up..choice."))
+pedssubs_year3 <- trach%>% 
+   select(starts_with("Pediatric.Subspecialists.at.three.Year.Follow.up..choice."))
+trach135$pedssubs_year1 <- rowSums(check(pedssubs_year1))
+trach135$pedssubs_year3 <- rowSums(check(pedssubs_year3))
+
+surgical_year1 <- trach%>% 
+   select(starts_with("Pediatric.Surgical.Subspecialits.at.One.Year..choice."))
+surgical_year3 <- trach%>% 
+   select(starts_with("Pediatric.Surgical.Subspecialits.at.Three.Years..choice."))
+trach135$surgical_year1 <- rowSums(check(surgical_year1))
+trach135$surgical_year3 <- rowSums(check(surgical_year3))
+```
+
+```{r}
+sapply(trach135, function(x) median(x, na.rm = TRUE))
+sapply(trach135, function(x) IQR(x, na.rm = TRUE))
+```
+Mortality After Tracheostomy
+```{r}
+after <- data.frame(
+age_death=trach$Age.at.Death..in.months., 
+timewithtrach_mortality=trach$Length.of.time.lived.with.tracheostomy..months., 
+pim_mortality=trach$PIM.2.Predicted.Mortality....,
+# admit_mortality=trach$Admission.Diagonsis, 
+# cod_mortality=trach$Cause.of.Death, 
+admit_year5=trach$Number.of.hospital.admissions.2, 
+chd_mortality=trach$Presence.of.congenital.heart.disease,
+cbp_mortality=trach$Did.this.patient.have.surgery.requiring.cardiac.bypass.during.the.admission.associated.with.mortality.,
+pcpc_mortality=trach$Pediatric.Cerebral.Performance.Category,
+fsstotal_mortality=trach$Functional.Status.Scale..TOTAL.SCORE..,
+respsupport_mortality=trach$Respiratory.support.prior.to.admission.associated.with.patient.s.death,
+trachcomps_mortality=trach$Tracheostomy.complications.associated.with.mortality.
+)
+
+after$pcpc_mortality <- as.numeric(substr(after$pcpc_mortality, start = 1, stop = 1))
+
+chddx_mortality <- trach$Congenital.Heart.Lesion
+
+assocdx_mortality <- trach%>% 
+   select(starts_with("Which.co.morbid.diagnoses.were.present.at.the.admission.associated.with.the.death.of.this.patient...choice."))
+after$assocdx_mortality <- rowSums(check(assocdx_mortality))
+
+newcomorbid_mortality <- trach%>% 
+   select(starts_with("Which.co.morbid.conditions.developed.at.any.time.during.the.admission.associated.with.the.death.of.this.patient...choice."))
+after$newcomorbid_mortality <- rowSums(check(newcomorbid_mortality))
+
+meds_mortality <- trach%>% 
+   select(starts_with("What.medications.was.the.patient.taking.at.the.admission.associated.with.the.death.of.the.patient...choice."))
+after$meds_mortality <- rowSums(check(meds_mortality))
+
+after$respsupport_mortality <- 
+as.numeric(c("Trach collar or HME" = 1, "PS with CPAP during any portion of the day(including sleep)" = 2, "Full veniilator support during any portion of the day (including sleep)"=3)[after$respsupport_mortality])
+
+trachmortality_details <- trach%>% 
+   select(starts_with("Please.describe.trachesotomy.complications..choice."))
+after$trachmortality_details <- rowSums(check(trachmortality_details))
+
+after$chd_mortality <- as.numeric(yes(after$chd_mortality))
+after$cbp_mortality <- as.numeric(yes(after$cbp_mortality))
+after$trachcomps_mortality <- as.numeric(yes(after$trachcomps_mortality))
+```
+
+```{r}
+sapply(after, function(x) median(x, na.rm = TRUE))
+sapply(after, function(x) IQR(x, na.rm = TRUE))
+```

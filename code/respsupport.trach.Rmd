@@ -1,0 +1,211 @@
+---
+title: "Resp Support at three year (choice=Decannulated) of Tracheostomy Resource Utilization Study"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+---
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+echo = FALSE,
+cache = FALSE,
+include = TRUE,
+collapse = TRUE,
+warning = FALSE,
+message = FALSE,
+dependson = NULL,
+engine = "R", # Chunks will always have R code, unless noted
+error = TRUE,
+fig.path="Figures/nas_mwph", # Set the figure optins
+fig.align = "center",
+fig.width = 6,
+fig.height = 6,
+dpi = 300)
+```
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(table1) 
+trach <- read.csv("C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\TracheostomyResource_DATA_LABELS_2023-02-03_1248.csv")
+```
+
+```{r}
+my_theme <- function() {
+ theme(axis.text.x=element_text(vjust=1, size=11, color="black"),
+ axis.text.y=element_text(hjust=1,vjust=1, size=12, color="black"),
+ panel.background=element_rect(fill="white",color="black"),
+ plot.title = element_text(size = 15, face = "bold"),
+ panel.grid.minor.y = element_blank(),
+ panel.grid.major.y = element_line(color="#CCCCCC", linetype = 2),
+ panel.grid.minor.x = element_blank(),
+ panel.grid.major.x = element_line(color="#CCCCCC", linetype = 2),
+ axis.title.x=element_text(size=22, face = "bold"),
+ axis.title.y=element_text(size=22, face = "bold"),
+ strip.text=element_text(size=12, face = "bold"),
+ legend.text=element_text(size=20,face="bold"),
+ legend.title=element_text(colour="black", size=22, face="bold"),
+ axis.line.x = element_line(size = 1.5),
+ axis.line.y = element_line(size = 1.5),
+ axis.ticks = element_line(size = 1.5,color="black"),
+ axis.text = element_text(color="black"),
+ axis.ticks.length= unit(0.45, "cm"),
+ legend.key.width = unit(1.2, "cm"))
+ #legend.background = element_rect(fill="white",color="black"))
+}
+```
+
+```{r}
+trach1 <- data.frame(fssmental_year1=trach$Functional.Status.Score..MENTAL, fsssensory_year1=trach$Functional.Status.Score..SENSORY, fsscommunication_year1=trach$Functional.Satus.Score..COMMUNICATION, 
+fssmotor_year1=trach$Functional.Status.Scale..MOTOR.,
+fssfeeding_year1=trach$Functional.Status.Scale..FEEDING,
+fssresp_year1=trach$Functional.Status.Scale..RESPIRATORY,
+respsupports_Decan_year1=trach$Resp.Support.at.one.year..choice.Decannulated.,
+
+fssmental_year3=trach$Functional.Status.Scale..MENTAL,
+fsssensory_year3=trach$Functional.Status.Scale..SENSORY,
+fsscommunication_year3=trach$Functional.Status.Scale..COMMUNICATION,
+fssmotor_year3=trach$Functional.Status.Scale..MOTOR,
+fssfeeding_year3=trach$Functional.Status.Scale..FEEDING.1,
+fssresp_year3=trach$Functional.Status.Scale..RESPIRATORY.1,
+respsupports_Decan_year3=trach$Resp.Support.at.three.years..choice.Decannulated.)
+```
+
+## Bar plots of 6 components of FSS total
+1: Normal; 2: Mild; 3: Moderate; 4: Severe; 5: Very severe dysfunction\
+13 missing in the 6 components
+```{r}
+# resp <- data.frame(mental=trach$Functional.Status.Scale..MENTAL,
+# sensory=trach$Functional.Status.Scale..SENSORY,
+# communication=trach$Functional.Status.Scale..COMMUNICATION,
+# motor=trach$Functional.Status.Scale..MOTOR,
+# feeding=trach$Functional.Status.Scale..FEEDING.1,
+# resp=trach$Functional.Status.Scale..RESPIRATORY.1,
+# respsupports_Decan=trach$Resp.Support.at.three.years..choice.Decannulated.)
+resp <- data.frame(mental=trach$Functional.Status.Score..MENTAL,
+sensory=trach$Functional.Status.Score..SENSORY,
+communication=trach$Functional.Satus.Score..COMMUNICATION,
+motor=trach$Functional.Status.Scale..MOTOR.,
+feeding=trach$Functional.Status.Scale..FEEDING,
+resp=trach$Functional.Status.Scale..RESPIRATORY,
+respsupports_Decan=trach$Resp.Support.at.three.years..choice.Decannulated.)
+
+num <- function(x) {
+  ifelse(grepl("^Normal", x), 1, 
+         ifelse(grepl("^Mild", x), 2, 
+                ifelse(grepl("^Moderate", x), 3, 
+                       ifelse(grepl("^Severe", x), 4, 
+                              ifelse(grepl("^Very", x), 5, NA)))))
+}
+
+resp1 <- data.frame(cbind(apply(resp[,-c(7)], 2, function(x) num(x))), respsupports_Decan=resp[,7])
+resp1[,c(1:6)] <- lapply(resp1[,c(1:6)], as.factor)
+resp1[,c(7)] <- as.factor(ifelse(resp1[,c(7)]=="Checked",1,0))
+
+resp2 <- na.omit(resp1)
+
+df_long <- resp2[,c(1:6)] %>%
+  gather(key = "components", value = "value")
+
+df_long <- cbind(id=factor(rev(paste0("#", 1:50)), level = rev(paste0("#", 1:50))),df_long)
+# Create bar plots using facet_wrap
+ggplot(df_long, aes(x = value, fill = components)) +
+  geom_bar(stat = "count", position = "dodge") +
+  ylim(c(0,50)) +
+  facet_wrap(~ components, ncol = 3) + 
+  theme(legend.position="none") +
+  # geom_text(aes(label = paste("Count:", (df_long %>% count(value, variable))$n)), position = position_dodge(width = 0.9), vjust = -0.5)+
+  # geom_text(data = df_long %>% count(value, components), aes(label = paste("Count:",n), y = Inf, x  = -Inf), position = position_dodge(width = 0.9), vjust = -0.5)+
+  geom_text(stat = "count", aes(label = ..count..), vjust = 0) +
+  labs(x = "Condition", y = "Count", title = "Facet plots of 6 components of FSS total in year 3") +
+  my_theme()
+```
+
+## Heatmap-like plot of 6 components 
+```{r}
+ggplot(df_long, aes(components, id)) + geom_tile(aes(fill = value)) + scale_fill_discrete(name = "Condition", labels = c("Normal", "Mild", "Moderate", "Severe", "Very severe"))
+
+# ggsave("heat.png", path = "C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy", width = 20, height = 20, device='tiff', dpi=20)
+```
+
+
+## Fit logistic regression for all 6 components (outcome is Resp Support at tree year (choice=Decannulated))
+All covariates are insignificant. 
+```{r warning=FALSE}
+convert <- function(x) ifelse(x==1,1,"other")
+resp3 <- cbind(as.data.frame(lapply(resp2[,1:6], convert)), respsupports_Decan=resp2$respsupports_Decan)
+
+my_factor <- function(x) factor(x, levels = c("other","1"))
+resp3[,1:6] <- lapply(resp3[1:6], my_factor)
+
+model1 <- glm(respsupports_Decan ~ mental + sensory + communication + motor + feeding + resp, family = "binomial", data=resp3)
+summary(model1)
+```
+
+## Fit logistic regression for one component(MOTOR, FEEDING)
+Going to Normal from other categories in MOTOR, the odds of checked in the outcome (versus unchecked) increase by a factor of 4.4.\
+
+Going to Normal from other categories in FEEDING, the odds of checked in the outcome (versus unchecked) increase by a factor of 7.5.
+```{r warning=FALSE}
+model2 <- glm(respsupports_Decan ~ motor, family = "binomial", data=resp3)
+summary(model2)
+
+model3 <- glm(respsupports_Decan ~ feeding, family = "binomial", data=resp3)
+summary(model3)
+
+# model3 <- glm(respsupports_Decan ~ resp, family = "binomial", data=resp3)
+# summary(model3)
+
+table(resp3$respsupports_Decan)
+
+confint.default(model2)
+confint.default(model3)
+
+summary(glm(respsupports_Decan ~ mental, family = "binomial", data=resp3))
+summary(glm(respsupports_Decan ~ sensory, family = "binomial", data=resp3))
+summary(glm(respsupports_Decan ~ communication, family = "binomial", data=resp3))
+summary(glm(respsupports_Decan ~ resp, family = "binomial", data=resp3))
+```
+## Stepwise of logistic regression in terms of AIC
+step1: mental + sensory + communication + motor + feeding + resp\
+step2: mental + sensory + communication + motor + resp\
+step3: mental + sensory + communication + resp\
+step4: mental + sensory + resp\
+step5: sensory + resp\
+```{r}
+step(model1,direction = c("both"))
+```
+without resp
+```{r}
+model1.1 <- glm(respsupports_Decan ~ mental + sensory + communication + motor + feeding, family = "binomial", data=resp3)
+step(model1.1,direction = c("both"))
+```
+
+```{r}
+model1.2 <- glm(respsupports_Decan ~ sensory + feeding, family = "binomial", data=resp3)
+summary(model1.2)
+confint.default(model1.2)
+```
+
+```{r}
+model4 <- glm(respsupports_Decan ~ motor+feeding, family = "binomial", data=resp3)
+summary(model4)
+```
+
+When resp=="Normal", respsupports_Decan=="checked"
+```{r}
+# cor(as.numeric(resp3$resp), as.numeric(resp3$respsupports_Decan), method = "spearman")
+
+resp2$resp
+resp2$respsupports_Decan
+```
+
+## P-value of chi-square test between one component and the outcome
+FEEDING and RESPIRATORY have relationship with the outcome
+```{r warning=FALSE}
+p <- function(x) {
+  table_data <- table(x, resp3$respsupports_Decan)
+return(chisq.test(table_data)$p.value)}
+# Perform a chi-square test of independence
+lapply(resp3[1:6], p)
+```

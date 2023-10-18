@@ -1,0 +1,126 @@
+---
+title: "Resp Support at three year (choice=Decannulated) of Tracheostomy Resource Utilization Study"
+output:
+  html_document:
+    toc: yes
+    toc_depth: 3
+---
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+echo = FALSE,
+cache = FALSE,
+include = TRUE,
+collapse = TRUE,
+warning = FALSE,
+message = FALSE,
+dependson = NULL,
+engine = "R", # Chunks will always have R code, unless noted
+error = TRUE,
+fig.path="Figures/nas_mwph", # Set the figure optins
+fig.align = "center",
+fig.width = 6,
+fig.height = 6,
+dpi = 300)
+```
+
+```{r warning=FALSE, message=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(table1) 
+trach <- read.csv("C:\\Users\\15715\\Desktop\\22fall\\Mathangi\\trachstudy\\TracheostomyResource_DATA_LABELS_2023-02-03_1248.csv")
+```
+
+```{r}
+my_theme <- function() {
+ theme(axis.text.x=element_text(vjust=1, size=11, color="black"),
+ axis.text.y=element_text(hjust=1,vjust=1, size=12, color="black"),
+ panel.background=element_rect(fill="white",color="black"),
+ plot.title = element_text(size = 15, face = "bold"),
+ panel.grid.minor.y = element_blank(),
+ panel.grid.major.y = element_line(color="#CCCCCC", linetype = 2),
+ panel.grid.minor.x = element_blank(),
+ panel.grid.major.x = element_line(color="#CCCCCC", linetype = 2),
+ axis.title.x=element_text(size=22, face = "bold"),
+ axis.title.y=element_text(size=22, face = "bold"),
+ strip.text=element_text(size=12, face = "bold"),
+ legend.text=element_text(size=20,face="bold"),
+ legend.title=element_text(colour="black", size=22, face="bold"),
+ axis.line.x = element_line(size = 1.5),
+ axis.line.y = element_line(size = 1.5),
+ axis.ticks = element_line(size = 1.5,color="black"),
+ axis.text = element_text(color="black"),
+ axis.ticks.length= unit(0.45, "cm"),
+ legend.key.width = unit(1.2, "cm"))
+ #legend.background = element_rect(fill="white",color="black"))
+}
+```
+
+## Bar plots of 6 components of FSS total
+```{r}
+# 3-year
+resp_3 <- data.frame(mental=trach$Functional.Status.Scale..MENTAL,
+sensory=trach$Functional.Status.Scale..SENSORY,
+communication=trach$Functional.Status.Scale..COMMUNICATION,
+motor=trach$Functional.Status.Scale..MOTOR,
+feeding=trach$Functional.Status.Scale..FEEDING.1,
+resp=trach$Functional.Status.Scale..RESPIRATORY.1,
+fsstotal_year3=trach$Functional.Status.Scale..TOTAL.SCORE..
+)
+
+# 1-year
+resp_1 <- data.frame(mental=trach$Functional.Status.Score..MENTAL,
+sensory=trach$Functional.Status.Score..SENSORY,
+communication=trach$Functional.Satus.Score..COMMUNICATION,
+motor=trach$Functional.Status.Scale..MOTOR.,
+feeding=trach$Functional.Status.Scale..FEEDING,
+resp=trach$Functional.Status.Scale..RESPIRATORY,
+fsstotal_year1=trach$Functional.Status.Scale.TOTAL.SCORE
+)
+
+# discharge
+resp_d <- data.frame(
+  mental=trach$DISCHARGE.Functional.Status.Scale..MENTAL.STATUS,
+  sensory=trach$DISCHARGE.Functional.Status.Score..SENSORY.FUNCTION,
+  communication=trach$DISCHARGE.Functional.Status.Scale..COMMUNICATION,
+  motor=trach$DISCHARGE.Functional.Status.Scale..MOTOR.FUNCTIONING,
+  feeding=trach$DISCHARGE.Functional.Status.Scale..FEEDING,
+  resp=trach$DISCHARGE.Functional.Status.Scale..RESPIRATORY.STATUS,
+  dischargefss_total=trach$Discharge.Functional.Status.Score.TOTAL
+)
+
+num <- function(x) {
+  ifelse(grepl("^Normal", x), "Normal", 
+         ifelse(grepl("^Mild", x), "Mild", 
+                ifelse(grepl("^Moderate", x), "Moderate", 
+                       ifelse(grepl("^Severe", x), "Severe", 
+                              ifelse(grepl("^Very", x), "Very Severe", NA)))))
+}
+
+df <- function(a){
+resp1 <- data.frame(cbind(apply(a[,-c(7)], 2, function(x) num(x))))
+resp1[,c(1:6)] <- lapply(resp1[,c(1:6)], as.factor)
+resp2 <- na.omit(resp1)
+
+resp2[,c(1:6)] %>%
+  gather(key = "components", value = "Conditions")
+}
+
+df_long1 <- cbind(id=factor(rev(paste0("#", 1:53)), level = rev(paste0("#", 1:53))),df(resp_d))
+df_long2 <- cbind(id=factor(rev(paste0("#", 1:50)), level = rev(paste0("#", 1:50))),df(resp_1))
+df_long3 <- cbind(id=factor(rev(paste0("#", 1:40)), level = rev(paste0("#", 1:40))),df(resp_3))
+```
+
+```{r}
+# group.colors <- c("Normal" = "#00BF7D", "Mild" = "#A3A500", "Moderate" ="#00B0F6", "Severe" = "#F8766D", "Very Severe"= "#FF0000")
+# unique(layer_data(last_plot())$fill)
+group.colors <- c("Normal" = "#2B83BA", "Mild" = "#ABDDA4", "Moderate" ="#FFFFBF", "Severe" = "#FDAE61", "Very Severe"= "#D7191C")
+
+heatm <- function(x){
+ggplot(x, aes(components, id)) + geom_tile(aes(fill = Conditions)) +
+  scale_fill_manual(values=group.colors)+
+  theme(legend.position = "top")
+}
+heatm(df_long1)
+heatm(df_long2)
+heatm(df_long3)
+```
