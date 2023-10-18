@@ -38,31 +38,31 @@ The goal of this project is to describe post-hospital outcomes of tracheostomy i
 
 ### Workflow
 <div align="center">
-<img src="https://github.com/JILI1028/Tracheostomy-Project-/blob/main/images/workflow1.png" width="450" height="300">
+<img src="https://github.com/JILI1028/trach-project/blob/main/images/workflow1.png" width="450" height="300">
 </div>
 
 ### Example plots in EDA
 
 * Heatmap
 <div align="center">
-<img src="https://github.com/JILI1028/Tracheostomy-Project-/blob/main/images/nas_mwphunnamed-chunk-4-2.png" width="400" height="400">
+<img src="https://github.com/JILI1028/trach-project/blob/main/images/nas_mwphunnamed-chunk-4-2.png" width="400" height="400">
 </div>
 For feeding and resp, most of the patients have a moderate condition. 
 
 * Bar plots
 <div align="center">
-<img src="https://github.com/JILI1028/Tracheostomy-Project-/blob/main/images/nas_mwphunnamed-chunk-10-1.png" width="400" height="400">
+<img src="https://github.com/JILI1028/trach-project/blob/main/images/nas_mwphunnamed-chunk-10-1.png" width="400" height="400">
 </div>
 
 * Longitudinal trajactories
 <div align="center">
-<img src="https://github.com/JILI1028/Tracheostomy-Project-/blob/main/images/nas_mwphunnamed-chunk-13-1.png" width="400" height="400">
+<img src="https://github.com/JILI1028/trach-project/blob/main/images/nas_mwphunnamed-chunk-13-1.png" width="400" height="400">
 </div>
 FSS_total stands for Functional Status Score (FSS) TOTAL. The mean of FSS_total decreases from admission to year3.
 
 * Facet plots
 <div align="center">
-<img src="https://github.com/JILI1028/Tracheostomy-Project-/blob/main/images/nas_mwphunnamed-chunk-19-1.png" width="500" height="500">
+<img src="https://github.com/JILI1028/trach-project/blob/main/images/nas_mwphunnamed-chunk-19-1.png" width="500" height="500">
 </div>
 In admissions, the box plot in 1-year follow up is higher than the plot for 3-year follow up. When admissions=1, FSS_total in 1-year follow up has the same median as FSS_total in 3-year follow up.
 
@@ -92,9 +92,5 @@ Ji Li - jil1@umbc.edu
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 <!-- MARKDOWN LINKS & IMAGES -->
-[matplotlib-url]: https://pandas.pydata.org/](https://matplotlib.org/
-[seaborn-url]: https://seaborn.pydata.org/
-[seaborn.js]: https://seaborn.pydata.org/_static/logo-wide-lightbg.svg
-[numpy-url]: https://numpy.org/
 [heatmap.js]: https://github.com/JILI1028/bank-marketing/blob/main/images/cor1016.png
 [folder-url]: https://github.com/JILI1028/Tracheostomy-Project-/blob/main/reports/trach_tables.docx
